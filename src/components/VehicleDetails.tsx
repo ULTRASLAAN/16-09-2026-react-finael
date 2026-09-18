@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 
-// Ajuste cette interface selon les propriétés réelles de tes véhicules dans ton projet
 interface Vehicle {
   id: number;
   brand: string;
   model: string;
   year: number;
-  price: number;
+  price: number | string;
   mileage: number;
-  origin: string;
+  origin?: string;
   status: string;
   notes?: string;
   vin?: string;
@@ -17,10 +16,13 @@ interface Vehicle {
 
 interface VehicleDetailsProps {
   vehicle: Vehicle;
-  onClose?: () => void; // Optionnel si tu as un bouton pour fermer la modale/vue
+  onClose?: () => void;
 }
 
 export default function VehicleDetails({ vehicle, onClose }: VehicleDetailsProps) {
+  // Sûreté de débogage pour voir directement dans la console du navigateur (F12)
+  console.log("🔍 Données reçues dans VehicleDetails :", vehicle);
+
   const [reportLoading, setReportLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
 
@@ -29,8 +31,12 @@ export default function VehicleDetails({ vehicle, onClose }: VehicleDetailsProps
     setTimeout(() => {
       setReportLoading(false);
       setReportGenerated(true);
-    }, 1500); // Simulation d'une recherche de 1.5s
+    }, 1500);
   };
+
+  if (!vehicle) {
+    return <div className="p-6 text-center text-gray-500">Aucun détail de véhicule disponible.</div>;
+  }
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-xl max-w-xl mx-auto border border-gray-100 space-y-6">
@@ -40,22 +46,28 @@ export default function VehicleDetails({ vehicle, onClose }: VehicleDetailsProps
           <h2 className="text-2xl font-bold text-gray-900">
             {vehicle.brand} {vehicle.model}
           </h2>
-          <p className="text-sm text-gray-500">Année : {vehicle.year} • Origine : {vehicle.origin}</p>
+          <p className="text-sm text-gray-500">
+            Année : {vehicle.year} {vehicle.origin ? `• Origine : ${vehicle.origin}` : ''}
+          </p>
         </div>
         <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-          {vehicle.status}
+          {vehicle.status || 'Disponible'}
         </span>
       </div>
 
       {/* Grille des caractéristiques principales */}
       <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
         <div>
-          <span className="text-xs text-gray-500 block">Prix d'achat</span>
-          <span className="text-lg font-bold text-gray-800">{vehicle.price?.toLocaleString()} €</span>
+          <span className="text-xs text-gray-500 block">Prix</span>
+          <span className="text-lg font-bold text-gray-800">
+            {typeof vehicle.price === 'number' ? vehicle.price.toLocaleString() : vehicle.price} €
+          </span>
         </div>
         <div>
           <span className="text-xs text-gray-500 block">Kilométrage</span>
-          <span className="text-lg font-bold text-gray-800">{vehicle.mileage?.toLocaleString()} km</span>
+          <span className="text-lg font-bold text-gray-800">
+            {vehicle.mileage ? vehicle.mileage.toLocaleString() : 'N/C'} km
+          </span>
         </div>
       </div>
 
@@ -66,17 +78,17 @@ export default function VehicleDetails({ vehicle, onClose }: VehicleDetailsProps
         </div>
       )}
 
-      {/* --- BLOC HISTORIQUE & CONTRÔLE TECHNIQUE (Style CarVertical) --- */}
-      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+      {/* --- BLOC HISTORIQUE & CONTRÔLE TECHNIQUE (Forcé et visible) --- */}
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 shadow-inner">
         <div className="flex justify-between items-center">
           <div>
             <h4 className="font-semibold text-gray-800 text-sm">🔍 Historique & Contrôle Technique</h4>
-            <p className="text-xs text-gray-500 font-mono">VIN : {vehicle.vin || 'VIN non disponible'}</p>
+            <p className="text-xs text-gray-700 font-mono mt-1">
+              VIN : <strong className="text-slate-900">{vehicle.vin || 'Non renseigné'}</strong>
+            </p>
           </div>
-          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
-            vehicle.technical_control?.includes('OK') ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-          }`}>
-            CT : {vehicle.technical_control || 'À vérifier'}
+          <span className="px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-700">
+            CT : {vehicle.technical_control || 'OK'}
           </span>
         </div>
 
@@ -84,16 +96,16 @@ export default function VehicleDetails({ vehicle, onClose }: VehicleDetailsProps
           <button 
             onClick={handleCheckHistory}
             disabled={reportLoading}
-            className="w-full bg-slate-900 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-slate-800 transition disabled:opacity-50"
+            className="w-full bg-slate-900 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-slate-800 transition disabled:opacity-50 shadow-sm"
           >
             {reportLoading ? "Interrogation des bases européennes..." : "📄 Générer un rapport d'historique (Style CarVertical)"}
           </button>
         ) : (
           <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-xs text-emerald-900 space-y-1">
             <p className="font-bold">✅ Rapport CarVertical Virtuel Validé :</p>
-            <p>• Kilométrage certifié cohérent (Pas de recompteur détecté).</p>
+            <p>• Kilométrage certifié cohérent (Pas de compteur modifié).</p>
             <p>• Aucun accident grave répertorié dans les registres européens.</p>
-            <p>• Situation administrative : Véhicule non gagé, démarches d'immatriculation OK.</p>
+            <p>• Situation administrative : Véhicule non gagé, démarches OK.</p>
           </div>
         )}
       </div>

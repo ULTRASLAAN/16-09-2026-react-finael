@@ -11,6 +11,8 @@ export interface Vehicle {
   link?: string
   notes?: string
   status?: string
+  vin?: string
+  technical_control?: string
 }
 
 export interface User {
@@ -31,6 +33,30 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
+function normalizeVehicle(vehicle: any): Vehicle {
+  const normalizedVin = vehicle.vin ?? vehicle.vin_number ?? vehicle.vinNumber ?? ''
+  const normalizedTechnical =
+    vehicle.technical_control ??
+    vehicle.technicalControl ??
+    vehicle.control_technique ??
+    'À vérifier'
+
+  return {
+    id: vehicle.id,
+    brand: vehicle.brand ?? vehicle.make ?? 'Inconnue',
+    model: vehicle.model ?? 'Modèle inconnu',
+    year: Number(vehicle.year ?? 0),
+    price: Number(vehicle.price ?? vehicle.price_eur ?? 0),
+    mileage: Number(vehicle.mileage ?? vehicle.mileage_km ?? 0),
+    origin: vehicle.origin ?? vehicle.origin_country ?? vehicle.country ?? 'France',
+    link: vehicle.link,
+    notes: vehicle.notes,
+    status: vehicle.status,
+    vin: normalizedVin,
+    technical_control: normalizedTechnical
+  }
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [favorites, setFavorites] = useState<(number | string)[]>([])
@@ -44,10 +70,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetch('http://localhost:5000/api/vehicles')
       .then(res => res.json())
       .then(data => {
-        console.log("Véhicules chargés depuis la BDD :", data)
-        setVehicles(data)
+        const normalizedVehicles = Array.isArray(data) ? data.map(normalizeVehicle) : []
+        console.log('Véhicules chargés depuis la BDD :', normalizedVehicles)
+        setVehicles(normalizedVehicles)
       })
-      .catch(err => console.error("Erreur de chargement des véhicules :", err))
+      .catch(err => console.error('Erreur de chargement des véhicules :', err))
   }, [])
 
   const toggleFavorite = (id: number | string) => {
