@@ -6,7 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connexion PostgreSQL
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
@@ -15,8 +14,7 @@ const pool = new Pool({
   port: 5432,
 });
 
-// Normalisation des véhicules pour le frontend
-function normalizeVehicleRow(vehicle) {
+function normalizeVehicle(vehicle) {
   return {
     id: vehicle.id,
     brand: vehicle.brand || vehicle.make || 'Inconnue',
@@ -31,17 +29,21 @@ function normalizeVehicleRow(vehicle) {
       vehicle.technicalControl ||
       vehicle.control_technique ||
       'À vérifier',
+    image:
+      vehicle.image ||
+      vehicle.image_url ||
+      vehicle.photo_url ||
+      'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=80',
     status: vehicle.status || 'inconnu',
     notes: vehicle.notes || '',
     link: vehicle.link || ''
   };
 }
 
-// Route 1 : récupérer la liste des véhicules
 app.get('/api/vehicles', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM vehicles ORDER BY id DESC');
-    const vehicles = result.rows.map(normalizeVehicleRow);
+    const vehicles = result.rows.map(normalizeVehicle);
     res.json(vehicles);
   } catch (err) {
     console.error(err);
@@ -49,7 +51,6 @@ app.get('/api/vehicles', async (req, res) => {
   }
 });
 
-// Route 2 : historique kilométrique
 app.get('/api/vehicles/:id/mileage', async (req, res) => {
   const { id } = req.params;
   try {
@@ -64,18 +65,17 @@ app.get('/api/vehicles/:id/mileage', async (req, res) => {
   }
 });
 
-// Route 3 : ajouter un véhicule
 app.post('/api/vehicles', async (req, res) => {
-  const { vin, make, model, year, price, country } = req.body;
+  const { vin, make, model, year, price, country, image } = req.body;
   const brandValue = make || 'Inconnue';
 
   try {
     const result = await pool.query(
-      `INSERT INTO vehicles (vin, brand, model, year, price_eur, origin_country, destination_country, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, 'France', 1) RETURNING *`,
-      [vin, brandValue, model, year, price, country]
+      `INSERT INTO vehicles (vin, brand, model, year, price_eur, origin_country, destination_country, user_id, image)
+       VALUES ($1, $2, $3, $4, $5, $6, 'France', 1, $7) RETURNING *`,
+      [vin, brandValue, model, year, price, country, image || null]
     );
-    res.status(201).json(normalizeVehicleRow(result.rows[0]));
+    res.status(201).json(normalizeVehicle(result.rows[0]));
   } catch (err) {
     console.error('Erreur PostgreSQL :', err.message);
     res.status(500).json({ error: "Erreur lors de l'ajout du véhicule" });

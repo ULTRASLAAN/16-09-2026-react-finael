@@ -13,6 +13,7 @@ export interface Vehicle {
   status?: string
   vin?: string
   technical_control?: string
+  image?: string
 }
 
 export interface User {
@@ -53,7 +54,8 @@ function normalizeVehicle(vehicle: any): Vehicle {
     notes: vehicle.notes,
     status: vehicle.status,
     vin: normalizedVin,
-    technical_control: normalizedTechnical
+    technical_control: normalizedTechnical,
+    image: vehicle.image ?? vehicle.image_url ?? vehicle.photo_url ?? ''
   }
 }
 

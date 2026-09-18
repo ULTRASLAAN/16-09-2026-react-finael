@@ -120,26 +120,43 @@ export function Dashboard() {
           {filteredVehicles.length === 0 ? (
             <p style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Aucun véhicule ne correspond à vos critères de recherche.</p>
           ) : (
-            filteredVehicles.map(v => (
-              <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <Car size={24} color="#0066cc" />
-                  <div>
-                    <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem' }}>{v.brand} {v.model}</strong>
-                    <small style={{ color: '#64748b' }}>{v.year} — {v.mileage.toLocaleString()} km — Pays : <strong>{v.origin || 'France'}</strong></small>
+            filteredVehicles.map(v => {
+              const ctLabel = String(v.technical_control ?? 'À vérifier')
+              const isCtOk = ctLabel.toUpperCase().includes('OK')
+
+              return (
+                <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <Car size={24} color="#0066cc" />
+                    <div>
+                      <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem' }}>{v.brand} {v.model}</strong>
+                      <small style={{ color: '#64748b' }}>{v.year} — {v.mileage.toLocaleString()} km — Pays : <strong>{v.origin || 'France'}</strong></small>
+                      <div style={{ marginTop: '6px', display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '0.75rem', color: '#475569' }}>
+                        <span>VIN : <strong>{v.vin || 'Non renseigné'}</strong></span>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '999px',
+                          background: isCtOk ? '#dcfce7' : '#fef3c7',
+                          color: isCtOk ? '#166534' : '#92400e',
+                          fontWeight: 600
+                        }}>
+                          CT : {ctLabel}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{v.price.toLocaleString()} €</strong>
+                    <button onClick={() => toggleFavorite(v.id)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <Star size={20} color={isFavorite(v.id) ? '#eab308' : '#cbd5e1'} fill={isFavorite(v.id) ? '#eab308' : 'none'} />
+                    </button>
+                    <Link to={`/vehicules/${v.id}`} style={{ padding: '6px 12px', background: '#f1f5f9', color: '#0f172a', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500' }}>
+                      Fiche
+                    </Link>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>{v.price.toLocaleString()} €</strong>
-                  <button onClick={() => toggleFavorite(v.id)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                    <Star size={20} color={isFavorite(v.id) ? '#eab308' : '#cbd5e1'} fill={isFavorite(v.id) ? '#eab308' : 'none'} />
-                  </button>
-                  <Link to={`/vehicules/${v.id}`} style={{ padding: '6px 12px', background: '#f1f5f9', color: '#0f172a', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: '500' }}>
-                    Fiche
-                  </Link>
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>
@@ -286,6 +303,20 @@ export function VehicleDetail() {
           <div><strong>Kilométrage :</strong> {vehicle.mileage.toLocaleString()} km</div>
           <div><strong>Provenance :</strong> {vehicle.origin || 'France'}</div>
           <div><strong>Statut :</strong> <span style={{ color: '#16a34a', fontWeight: 'bold' }}>{vehicle.status}</span></div>
+          <div><strong>VIN :</strong> {vehicle.vin || 'Non renseigné'}</div>
+          <div>
+            <strong>Contrôle technique :</strong>{' '}
+            <span style={{
+              display: 'inline-block',
+              padding: '2px 8px',
+              borderRadius: '999px',
+              background: String(vehicle.technical_control ?? 'À vérifier').toUpperCase().includes('OK') ? '#dcfce7' : '#fef3c7',
+              color: String(vehicle.technical_control ?? 'À vérifier').toUpperCase().includes('OK') ? '#166534' : '#92400e',
+              fontWeight: 600
+            }}>
+              {vehicle.technical_control || 'À vérifier'}
+            </span>
+          </div>
         </div>
 
         {vehicle.notes && (
